@@ -14,16 +14,19 @@
 
 package com.googlecodelabs.example.backupkeyvalue;
 
+import android.app.Service;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
+import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import com.googlecodelabs.example.backupkeyvalue.R;
 
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -34,6 +37,8 @@ public class LoggedInActivity extends AppCompatActivity {
 
     // Object for intrinsic lock
     static final Object sDataLock = new Object();
+
+    private com.googlecodelabs.example.backupkeyvalue.ILocalBackupService localBackupService;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -60,6 +65,8 @@ public class LoggedInActivity extends AppCompatActivity {
         // You do not need to edit this activity
     }
 
+    private ServiceConnection serviceConnection;
+
     @Override
     public void onStart() {
         super.onStart();
@@ -73,5 +80,36 @@ public class LoggedInActivity extends AppCompatActivity {
         } catch (Exception e) {
             Log.e(TAG, "Unable to write to file");
         }
+
+        // setup ServiceConnection callback handler
+        serviceConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                localBackupService = com.googlecodelabs.example.backupkeyvalue.ILocalBackupService.Stub.asInterface(service);
+
+                try {
+                    String answer = localBackupService.getExternalMediaFolder("com.googlecodelabs.example.backupkeyvalue");
+                    Log.d(TAG, "getExternalMediaFolder answer: " + answer);
+                } catch (RemoteException e) {
+                    Log.e(TAG, "getExternalMediaFolder remote exception: " + e);
+                }
+
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                localBackupService = null;
+            }
+        };
+
+        // bind to LocalBackupService
+        final Intent localBackupServiceIntent = new Intent(this, LocalBackupService.class);
+        this.bindService(localBackupServiceIntent, serviceConnection, Service.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        this.unbindService(serviceConnection);
     }
 }

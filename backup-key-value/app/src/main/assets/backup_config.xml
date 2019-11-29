@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Config enable="true">
+    <Backup
+        Intent="com.imotion.start.backup"
+        Schedule="0 23 * ? * 1-5 *"
+        RootFolder="/sdcard/iMotionBackup"
+        MaxRotation="3"
+        MinimumSize="20MB"
+    >
+        <!-- White list for packages to customized backup folder -->
+        <!-- Default package goes to folder with the same name as package name -->
+        <DefaultPackages>
+            <Package name="com.googlecodelabs.example.backupexample" folder="/example1"/>
+            <Package name="com.googlecodelabs.example.backupkeyvalue" folder="/example2"/>
+        </DefaultPackages>
+
+        <!-- White list for auto backup these packages even manifest config not to backup -->
+        <OverridePackages>
+            <Package name="com.googlecodelabs.example.backupexample" folder="/com.googlecodelabs.example.backupexample"/>
+        </OverridePackages>
+    </Backup>
+</Config>
